@@ -58,3 +58,19 @@
 .theme-advanced {
   background: #e8f5e9;
 }
+.coupon-input {
+  margin-top: 10px;
+  padding: 6px 10px;
+  width: 100%;
+  font-size: 16px;
+}
+
+.apply-btn {
+  margin-top: 10px;
+  background-color: #ffb703;
+  padding: 8px 16px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}

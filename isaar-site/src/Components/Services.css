@@ -17,6 +17,14 @@
   max-width: 900px;
   margin: 0 auto 60px;
   line-height: 1.8;
+  color: #000000;
+}
+
+.sta {
+  font-size: 25px;
+  max-width: 900px;
+  margin: 0 auto 60px;
+  line-height: 1.8;
   color: #333;
 }
 

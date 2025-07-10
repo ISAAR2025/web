@@ -13,14 +13,14 @@ const Footer = () => {
         <p>&copy; {new Date().getFullYear()} www.isaar.in</p>
         
           {/* Collaborate Section */}
-          <div >
+          <div className="col">
             <h2>Collaborate With Us</h2>
             <p>
               We welcome <strong>schools, colleges, and universities</strong> to partner with ISAR and bring
               advanced UAV training to their students. Let's build the future of aerospace education together.
             </p>
-            <p>📞 <strong>Phone:</strong> +91-6374720788</p>
-            <p>📧 <strong>Email:</strong> admin@isaar.in</p>
+            <p> <strong>Phone:</strong> +91-6374720788</p>
+            <p> <strong>Email:</strong> admin@isaar.in</p>
           </div>
         <section className="contact-section">
           <div className="contact-container">

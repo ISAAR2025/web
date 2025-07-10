@@ -12,10 +12,11 @@ const Register = () => {
   };
 
   const sendVerificationCode = async () => {
+  try {
     const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/send-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: form.email })
+      body: JSON.stringify({ email: form.email }),
     });
 
     const data = await res.json();
@@ -23,9 +24,13 @@ const Register = () => {
       alert('Verification code sent!');
       setCodeSent(true);
     } else {
-      alert('Failed to send verification code.');
+      alert(`Failed: ${data.message || data.error || 'Unknown error'}`);
     }
-  };
+  } catch (err) {
+    alert('Network error. Check server is running.');
+    console.error('Send code error:', err);
+  }
+};
 
   const handleRegister = async (e) => {
     e.preventDefault();

@@ -124,6 +124,7 @@ body {
 }
 
 /* Gallery Section */
+/* Gallery Section Base Styles */
 .gallery-section {
   padding: 40px 20px;
   background-color: #ffffff;
@@ -131,21 +132,31 @@ body {
 }
 
 .gallery-title {
-  color: rgb(0, 0, 0);
-  font-size: 3rem;
-  margin-bottom: 10px;
+  color: #000;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
 }
 
+/* Gallery Wrapper with fixed height and responsive layout */
 .gallery-wrapper {
+  position: relative;
+  margin: 0 auto;
+  max-width: 1000px;
+  height: 60vh; /* Relative height for responsiveness */
+  min-height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  max-width: 900px;
-  margin: 0 auto;
+  overflow: hidden;
+  padding: 0 40px;
+  box-sizing: border-box;
 }
 
+/* Navigation Buttons */
 .gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   background: rgb(223, 213, 213);
   border: none;
   font-size: 2rem;
@@ -163,27 +174,61 @@ body {
 }
 
 .gallery-nav.left {
-  margin-right: 10px;
+  left: 10px;
 }
 
 .gallery-nav.right {
-  margin-left: 10px;
+  right: 10px;
 }
 
+/* Gallery Display */
 .gallery-display {
   flex: 1;
-  max-width: 100%;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 1.5rem;
+  overflow: hidden;
 }
 
 .gallery-display img,
 .gallery-display video {
   width: 100%;
-  height: auto;
-  border-radius: 1.5rem;
-  max-height: 500px;
+  height: 100%;
   object-fit: cover;
+  border-radius: 1.5rem;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  .gallery-title {
+    font-size: 2rem;
+  }
+
+  .gallery-nav {
+    width: 35px;
+    height: 35px;
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-wrapper {
+    height: 50vh;
+    padding: 0 20px;
+  }
+
+  .gallery-title {
+    font-size: 1.75rem;
+  }
+
+  .gallery-nav {
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+  }
 }
 
 

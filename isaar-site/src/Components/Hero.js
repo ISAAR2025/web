@@ -13,7 +13,7 @@ import gallery5 from '../Screenshot 2025-05-27 124339.png';
 import gallery6 from '../Screenshot 2025-05-27 124356.png';
 import gallery7 from '../Screenshot 2025-05-27 124412.png';
 
-import imageWhy from '../s7.jpg';
+
 import imageStudents from '../s8.jpg';
 import imageOffer from '../s9.jpg';
 
@@ -31,6 +31,9 @@ import img8 from '../FMR.jpeg';
 import img9 from '../CGG.jpeg';
 import img10 from '../AM.jpeg';
 import img11 from '../UL.jpeg';
+
+import About from './About';
+
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -143,20 +146,11 @@ const Hero = () => {
           </motion.p>
         </div>
       </motion.section>
+      
+      <About />
 
       <section className="home-highlights">
-        {[{
-          title: " Why Choose ISAR?",
-          img: imageWhy,
-          content: (
-            <ul>
-              <li> Certified training programs by industry experts</li>
-              <li> Real-world, hands-on UAV and robotics projects</li>
-              <li> STEM-aligned courses for students from school to college</li>
-              <li> Industrial survey, aerial mapping, and pilot licensing support</li>
-            </ul>
-          )
-        }, {
+        {[ {
           title: " Empowering Students Across India",
           img: imageStudents,
           content: (
@@ -313,6 +307,7 @@ The visit aligns with the company’s commitment to developing cutting-edge solu
     </div>
   </div>
 </section>
+
 
 
 

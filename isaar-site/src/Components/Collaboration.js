@@ -7,7 +7,7 @@ const Collaboration = () => {
     <div className="collab-page">
       <img src={ci} alt="Collaboration Banner" className="collab-banner" />
       <div className="collab-header">
-        <h1>🤝 Partner With ISAR</h1>
+        <h1> Collaborate With ISAR</h1>
         <p>Bring UAV Training to Your Institution</p>
       </div>
 

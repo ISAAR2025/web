@@ -1,12 +1,17 @@
-const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const User = require('../models/User');
+const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
+const mongoose = require('mongoose'); // ⬅️ Add this
+
+
 require('dotenv').config();
 
 const verificationCodes = {}; // In-memory store for email verification
 
-// Nodemailer transporter
+// ✅ Nodemailer transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -15,7 +20,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// 1. Send Verification Code
+// ✅ 1. Send Verification Code
 exports.sendVerificationCode = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
@@ -41,7 +46,7 @@ exports.sendVerificationCode = async (req, res) => {
   }
 };
 
-// 2. Register User
+// ✅ 2. Register User
 exports.registerUser = async (req, res) => {
   const { fullName, email, password, code } = req.body;
 
@@ -55,16 +60,14 @@ exports.registerUser = async (req, res) => {
   }
 
   try {
-    const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) {
+    const existing = await User.findOne({ email });
+    if (existing) {
       return res.status(409).json({ success: false, message: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.query(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [fullName, email, hashedPassword]
-    );
+    const newUser = new User({ name: fullName, email, password: hashedPassword });
+    await newUser.save();
 
     delete verificationCodes[email];
     return res.status(201).json({ success: true, message: 'User registered successfully' });
@@ -74,23 +77,22 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// 3. Login User
+// ✅ 3. Login User
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const [results] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (results.length === 0) {
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid email' });
     }
 
-    const user = results[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Invalid password' });
     }
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'defaultSecret', {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'defaultSecret', {
       expiresIn: '1d',
     });
 
@@ -98,7 +100,7 @@ exports.loginUser = async (req, res) => {
       success: true,
       token,
       user: {
-        id: user.id,
+        id: user._id,
         fullName: user.name,
         email: user.email,
       },
@@ -109,7 +111,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// 4. Enroll in Course (Free or Paid — prevent duplicate)
+// ✅ 4. Enroll in Course (prevent duplicate)
 exports.enrollCourse = async (req, res) => {
   const { userId, courseName, price } = req.body;
 
@@ -118,20 +120,18 @@ exports.enrollCourse = async (req, res) => {
   }
 
   try {
-    const [existing] = await db.query(
-      'SELECT * FROM enrollments WHERE user_id = ? AND course_name = ?',
-      [userId, courseName]
-    );
-
-    if (existing.length > 0) {
+    const existing = await Enrollment.findOne({ user_id: userId, course_name: courseName });
+    if (existing) {
       return res.status(409).json({ success: false, message: 'Already enrolled in this course' });
     }
 
-    await db.query(
-      'INSERT INTO enrollments (user_id, course_name, price) VALUES (?, ?, ?)',
-      [userId, courseName, price ?? 0.0]
-    );
+    const newEnrollment = new Enrollment({
+      user_id: userId,
+      course_name: courseName,
+      price: price ?? 0.0,
+    });
 
+    await newEnrollment.save();
     return res.status(201).json({ success: true, message: 'Course enrolled successfully' });
   } catch (err) {
     console.error('Enrollment Error:', err);
@@ -139,25 +139,36 @@ exports.enrollCourse = async (req, res) => {
   }
 };
 
-// 5. Get Enrolled Courses by User ID
-// 5. Get Enrolled Courses for a User (With Details)
+// ✅ 5. Get Enrolled Courses for a User (With Details)
+// ✅ 5. Get Enrolled Courses for a User (With Payment Details)
 exports.getUserCourses = async (req, res) => {
   const userId = req.params.id;
 
   try {
-    const [rows] = await db.query(`
-      SELECT 
-        e.course_name,
-        e.price,
-        e.enrolled_at,
-        c.description,
-        c.image_url
-      FROM enrollments e
-      JOIN courses c ON e.course_name = c.title
-      WHERE e.user_id = ?
-    `, [userId]);
+    const enrollments = await Enrollment.find({ user_id: userId }).lean();
 
-    res.json({ success: true, courses: rows });
+    const courses = await Promise.all(enrollments.map(async (e) => {
+      const courseDoc = await Course.findOne({ title: e.course_name });
+      const payment = await Payment.findOne({
+  user_id: new mongoose.Types.ObjectId(userId),
+  course_name: e.course_name,
+});
+
+      return {
+        course_name: e.course_name,
+        price: e.price,
+        enrolled_at: e.enrolled_at,
+        description: courseDoc?.description || '',
+        image_url: courseDoc?.image_url || '',
+
+        // Payment Info for Receipt
+        receipt_id: payment?.receipt_id || null,
+        razorpay_order_id: payment?.razorpay_order_id || null,
+        razorpay_payment_id: payment?.razorpay_payment_id || null,
+      };
+    }));
+
+    res.json({ success: true, courses });
   } catch (err) {
     console.error('Fetch user courses error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch courses' });
@@ -165,23 +176,21 @@ exports.getUserCourses = async (req, res) => {
 };
 
 
-// ✅ Exported function definition (no '/send-otp' here!)
+// ✅ 6. Send OTP for Password Reset
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expires = new Date(Date.now() + 10 * 60 * 1000);
 
   try {
-    const [userRows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (userRows.length === 0) {
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    await db.query('UPDATE users SET reset_otp = ?, reset_otp_expires = ? WHERE email = ?', [
-      otp,
-      expires,
-      email,
-    ]);
+    user.reset_otp = otp;
+    user.reset_otp_expires = expires;
+    await user.save();
 
     await transporter.sendMail({
       from: `"ISAR Support" <${process.env.EMAIL_USER}>`,
@@ -192,35 +201,37 @@ exports.sendOtp = async (req, res) => {
 
     res.json({ success: true, message: 'OTP sent to email' });
   } catch (err) {
-    console.error(err);
+    console.error('Send OTP Error:', err);
     res.status(500).json({ success: false, error: 'Failed to send OTP' });
   }
 };
 
+// ✅ 7. Reset Password with OTP
 exports.resetPasswordWithOtp = async (req, res) => {
   const { email, otp, password } = req.body;
 
   try {
-    const [rows] = await db.query(
-      'SELECT * FROM users WHERE email = ? AND reset_otp = ? AND reset_otp_expires > NOW()',
-      [email, otp]
-    );
+    const user = await User.findOne({
+      email,
+      reset_otp: otp,
+      reset_otp_expires: { $gt: new Date() }
+    });
 
-    if (rows.length === 0) {
+    if (!user) {
       return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.reset_otp = null;
+    user.reset_otp_expires = null;
 
-    await db.query(
-      'UPDATE users SET password = ?, reset_otp = NULL, reset_otp_expires = NULL WHERE email = ?',
-      [hashedPassword, email]
-    );
-
+    await user.save();
     res.json({ success: true, message: 'Password reset successful' });
   } catch (err) {
+    console.error('Reset Password Error:', err);
     res.status(500).json({ success: false, error: 'Failed to reset password' });
   }
 };
-
+const Payment = require('../models/Payment'); // Add this at the top if not already
 

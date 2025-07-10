@@ -38,6 +38,7 @@ const UserTable = () => {
         <thead>
           <tr>
             <th>#</th>
+            <th>USER ID</th>
             <th>Full Name</th>
             <th>Email</th>
             <th>Registered At</th>
@@ -47,9 +48,10 @@ const UserTable = () => {
           {filteredUsers.map((user, idx) => (
             <tr key={user.id}>
               <td>{idx + 1}</td>
+              <td>{user._id}</td>
               <td>{user.name}</td>
               <td>{user.email}</td>
-              <td>{new Date(user.created_at).toLocaleString()}</td>
+              <td>{new Date(user.createdAt).toLocaleString()}</td>
             </tr>
           ))}
         </tbody>
